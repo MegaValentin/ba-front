@@ -1,8 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
+import L from "leaflet"
 import "leaflet/dist/leaflet.css";
 
-// Fix para que aparezca el icono correctamente (Leaflet bug con Webpack/Vite)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
@@ -10,27 +9,33 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const PropertyMap = ({ lat, lng }) => {
-  if (!lat || !lng) return <p>Coordenadas no disponibles.</p>;
+const MultiPropertyMap = ({ markers }) => {
+  if (!markers || markers.length === 0) return <p>No hay propiedades para mostrar.</p>;
+
+  // Centro inicial (tomo la primera propiedad como referencia)
+  const center = [markers[0].lat, markers[0].lng];
 
   return (
     <div className="w-full h-96 rounded-xl overflow-hidden shadow-md">
-      <MapContainer
-        center={[lat, lng]}
-        zoom={15}
-        scrollWheelZoom={false}   
-        className="h-full w-full"
-      > 
+      <MapContainer center={center} zoom={14} scrollWheelZoom={true} className="h-full w-full">
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
         />
-        <Marker position={[lat, lng]}>
-          <Popup>Ubicación de la propiedad</Popup>
-        </Marker>
+        
+        {markers.map((m) => (
+          <Marker key={m.id} position={[m.lat, m.lng]}>
+            <Popup>
+              {m.title || "Propiedad"}
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
 };
 
-export default PropertyMap;
+export default MultiPropertyMap;
+
+
+
