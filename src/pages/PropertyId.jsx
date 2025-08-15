@@ -4,6 +4,7 @@ import PropertyMap from "../components/PropertyMap";
 import axios from "axios";
 
 const apiUrl = import.meta.env.VITE_API_URL;
+const apiImg = import.meta.env.VITE_API_IMG
 
 export default function PropertyId() {
   const { id } = useParams();
@@ -65,10 +66,16 @@ export default function PropertyId() {
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden border">
           {property.imagen_lugar ? (
             <img
-              src={property.imagen_lugar}
-              alt={property.direccion}
-              className="w-full aspect-[16/9] object-cover"
-            />
+                src={
+                  property.imagen_lugar
+                    ? `${apiImg}${
+                        property.imagen_lugar.startsWith("/") ? "" : "/"
+                      }${property.imagen_lugar}`
+                    : "https://i.pinimg.com/736x/02/5a/68/025a68635acc04e38a3568406193297c.jpg"
+                }
+                alt="Imagen propiedad"
+                className="w-full h-full object-cover rounded-t-xl"
+              />
           ) : (
             <div className="w-full aspect-[16/9] bg-gray-100 flex items-center justify-center text-gray-400">
               Sin imagen

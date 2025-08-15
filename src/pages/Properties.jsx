@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const apiUrl = import.meta.env.VITE_API_URL;
+const apiImg = import.meta.env.VITE_API_IMG
 
 export default function Properties() {
   const [properties, setProperties] = useState([]);
@@ -21,7 +22,7 @@ export default function Properties() {
         console.error("Error al obtener las propiedades", error);
       }
     };
-
+      
     fetchProperties();
   }, []);
 
@@ -76,7 +77,13 @@ export default function Properties() {
             {/* Imagen */}
             <div className="h-44 md:h-40 w-full bg-gray-100">
               <img
-                src={property.imagen_lugar || "https://i.pinimg.com/736x/02/5a/68/025a68635acc04e38a3568406193297c.jpg"}
+                src={
+                  property.imagen_lugar
+                    ? `${apiImg}${
+                        property.imagen_lugar.startsWith("/") ? "" : "/"
+                      }${property.imagen_lugar}`
+                    : "https://i.pinimg.com/736x/02/5a/68/025a68635acc04e38a3568406193297c.jpg"
+                }
                 alt="Imagen propiedad"
                 className="w-full h-full object-cover rounded-t-xl"
               />

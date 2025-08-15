@@ -12,14 +12,16 @@ export default function NewProperty() {
     direccion: "",
     coordenada: "",
     descripcion_lugar: "",
-    estado: "disponible",
+    estado: true,
     propietario_id: "",
     habitaciones: 1,
     tipo: "casa",
-    imagen_lugar: "",
   });
+  const [ imagenes, setImagenes ] = useState([])
+  const [ preview, setPreview ] = useState([])
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [ success, setSuccess] = useState("")
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,31 +31,49 @@ export default function NewProperty() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const requiredFields = ["direccion", "coordenada", "descripcion_lugar", "propietario_id"];
-    const hasEmpty = requiredFields.some((field) => !formData[field]);
-
-    if (hasEmpty) {
-      setError("Por favor, completá todos los campos obligatorios.");
-      return;
-    }
-
-    try {
-      await axios.post(`${apiUrl}/addprop`, formData, {
-        withCredentials: true,
-      });
-      setSuccess("Propiedad agregada correctamente");
-      setError("");
-      setTimeout(() => {
-        navigate("/propiedades");
-      }, 1500);
-    } catch (error) {
-      setError("Hubo un error al agregar la propiedad.", error);
-    }
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files)
+    setImagenes(files)
+    setPreview(files.map((file) => URL.createObjectURL(file)));
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    const requiredFields = ["direccion", "coordenada", "descripcion_lugar", "propietario_id"];
+    if(requiredFields.some((field) => !formData[field])){
+      setError("Por favor, completá todos los obligatorios")
+      return
+    }
+
+    setLoading(true)
+    try {
+      const data = new FormData()
+      Object.entries(formData).forEach(([key, value]) =>{
+        data.append(key, value)
+      })
+
+      imagenes.forEach((img) => {
+        data.append("imagenes", img)
+      })
+
+      await axios.post(`${apiUrl}/addprop`, data, {
+        withCredentials: true,
+        headers:{"Content-Type": "multipart/form-data"}
+      })
+
+      setSuccess("Propiedad agregada correctamente")
+      setError("")
+      setTimeout(() => navigate("/propiedades"), 1500)
+
+    } catch (error) {
+      console.error(error)
+      setError("Hubo un error al agregar la propiedad")
+    } finally {
+      setLoading(false)
+    }
+
+  }
   return (
     <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-md">
       <div className="flex items-center gap-3 mb-6">
@@ -65,6 +85,7 @@ export default function NewProperty() {
       {success && <p className="text-green-600 mb-4">{success}</p>}
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Dirección */}
         <div className="col-span-1 md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
           <input
@@ -77,10 +98,11 @@ export default function NewProperty() {
           />
         </div>
 
+        {/* Coordenadas */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Coordenadas *</label>
           <input
-            type="text"
+            type="text"     
             name="coordenada"
             value={formData.coordenada}
             onChange={handleChange}
@@ -89,18 +111,32 @@ export default function NewProperty() {
           />
         </div>
 
+        {/* Imágenes */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (URL)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Imágenes</label>
           <input
-            type="text"
-            name="imagen_lugar"
-            value={formData.imagen_lugar}
-            onChange={handleChange}
-            placeholder="https://..."
+            type="file"
+            multiplec
+            name="imagenes" 
+            accept="image/*"
+            onChange={handleImageChange}
             className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
+          {preview.length > 0 && (
+            <div className="mt-2 flex gap-2 flex-wrap">
+              {preview.map((src, idx) => (
+                <img
+                  key={idx}
+                  src={src}
+                  alt={`preview-${idx}`}
+                  className="w-20 h-20 object-cover rounded"
+                />
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* Descripción */}
         <div className="col-span-1 md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
           <textarea
@@ -113,20 +149,26 @@ export default function NewProperty() {
           ></textarea>
         </div>
 
+        {/* Estado */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-          <select
-            name="estado"
-            value={formData.estado}
-            onChange={handleChange}
-            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="disponible">Disponible</option>
-            <option value="vendido">Vendido</option>
-            <option value="alquilado">Alquilado</option>
-          </select>
-        </div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+  <select
+    name="estado"
+    value={formData.estado}
+    onChange={(e) =>
+      setFormData((data) => ({
+        ...data,
+        estado: e.target.value === "true", // convertir string a boolean
+      }))
+    }
+    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+  >
+    <option value="true">Disponible</option>
+    <option value="false">Ocupada</option>
+  </select>
+</div>
 
+        {/* Tipo */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
           <select
@@ -142,6 +184,7 @@ export default function NewProperty() {
           </select>
         </div>
 
+        {/* Propietario ID */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Propietario ID *</label>
           <input
@@ -154,6 +197,7 @@ export default function NewProperty() {
           />
         </div>
 
+        {/* Habitaciones */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Habitaciones</label>
           <input
@@ -166,12 +210,14 @@ export default function NewProperty() {
           />
         </div>
 
+        {/* Botón */}
         <div className="col-span-1 md:col-span-2 pt-4">
           <button
             type="submit"
-            className="bg-blue-600 w-full text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+            disabled={loading}
+            className="bg-blue-600 w-full text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200 disabled:bg-gray-400"
           >
-            Guardar Propiedad
+            {loading ? "Guardando..." : "Guardar Propiedad"}
           </button>
         </div>
       </form>
